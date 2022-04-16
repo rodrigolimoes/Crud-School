@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {ConfigModule, ConfigService} from '@nestjs/config';
 import {StudentModule} from './student/student.module';
 import { TeacherModule } from './teacher/teacher.module';
+import { SchoolClassModule } from './school-class/school-class.module';
 
 @Module({
   imports: [
@@ -13,14 +14,15 @@ import { TeacherModule } from './teacher/teacher.module';
       imports: [ConfigModule],
       connectionName: 'crudschool',
       useFactory: async () => ({
-        uri: 'mongodb://localhost/crudschool',
+        uri: 'mongodb://localhost:27017/crudschool',
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }),
       inject: [ConfigService],
     }),
     StudentModule,
-    TeacherModule
+    TeacherModule,
+    SchoolClassModule
   ],
   controllers: [],
   providers: [],

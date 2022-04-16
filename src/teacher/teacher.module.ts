@@ -15,7 +15,7 @@ import { TeacherService } from './teacher.service';
     ], 'crudschool')
   ],
   controllers: [TeacherController],
-  providers: [TeacherService]
+  providers: [TeacherService],
 })
 export class TeacherModule {}
 

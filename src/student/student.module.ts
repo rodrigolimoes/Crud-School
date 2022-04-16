@@ -12,7 +12,8 @@ import {StudentModel, StudentSchema} from './model/student.model';
       collection: 'student',
     }],'crudschool')],
   providers: [StudentService],
-  controllers: [StudentController]
+  controllers: [StudentController],
+  exports:[StudentService]
 })
 export class StudentModule {}
 

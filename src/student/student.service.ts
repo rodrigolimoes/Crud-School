@@ -21,6 +21,7 @@ interface StudentMethod {
   findAll(): Promise<StudentModel[]>,
   findById(id: string): Promise<StudentModel>,
   findByEmail(email: string): Promise<StudentModel>,
+  findStudentsById(students: string[]):Promise<StudentModel[]>
 }
 
 @Injectable()
@@ -101,6 +102,34 @@ export class StudentService implements StudentMethod {
             }
           }
         );
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    async findStudentsById(students: string[]): Promise<StudentModel[]> {
+      try {
+
+        const idsStudents = Array.isArray(students)? students.map(e=> new Types.ObjectId(e)) : [];
+
+        return await this.studentModel.aggregate([
+          {
+            $match: {
+              _id: {$in: idsStudents }
+            }
+          },
+          {
+            $project:{
+              id: 1,
+              name: 1,
+              email: 1,
+              address: 1,
+              birthDate: 1,
+
+            }
+          },
+          {$sort: { name: 1}}
+        ])
       } catch (error) {
         throw error;
       }
