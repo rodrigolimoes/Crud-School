@@ -13,10 +13,10 @@ export class SchoolClassModel {
   students: string[];
 
   @Prop({required: true})
-  startTime: Date;
+  startTime: string;
 
   @Prop({required: true})
-  endTime: Date;
+  endTime: string;
 
 }
 

@@ -34,7 +34,7 @@ export class StudentController {
   }
 
   @Put("/:id")
-  async updateStudent(@Param() id: string, @Body() body: StudentDto){
+  async updateStudent(@Param("id") id: string, @Body() body: StudentDto){
     try {
       const {name, email, address, birthDate}  = body;
 
@@ -54,7 +54,7 @@ export class StudentController {
   }
 
   @Delete("/:id")
-  async deleteTeacher(@Param() id: string){
+  async deleteTeacher(@Param("id") id: string){
     try {
       let response = await this.studentService.deleteStudent(id);
 
@@ -74,7 +74,7 @@ export class StudentController {
   }
 
   @Get("/:id")
-  async findById(@Param() id: string){
+  async findById(@Param("id") id: string){
     try {
       return await this.studentService.findById(id);
     } catch (error) {

@@ -1,4 +1,4 @@
-import { SchoolClassModel } from './school-class.model';
+import { SchoolClassModel } from './schoolClass.model';
 
 describe('SchoolClass', () => {
   it('should be defined', () => {

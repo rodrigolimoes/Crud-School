@@ -1,23 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable} from '@nestjs/common';
 import {InjectModel} from '@nestjs/mongoose';
 import {Model, Types} from 'mongoose';
-import {SchoolClassDocument, SchoolClassModel} from './model/school-class.model';
+import {SchoolClassDocument, SchoolClassModel} from './model/schoolClass.model';
 import {StudentService} from '../student/student.service';
 
 interface ClassService {
   createSchoolClass(
     idTeacher: string,
     students: string[],
-    startTime: Date,
-    endTime: Date,
+    startTime: string,
+    endTime: string,
   ): Promise<SchoolClassModel | null>,
   changeTeacher(idClass: string, teacher: string): Promise<SchoolClassModel>,
   addStudents(idClass: string, students: string[]): Promise<SchoolClassModel>,
   findAll(): Promise<SchoolClassModel[]>,
   findById(id: string): Promise<SchoolClassModel>,
   deleteSchoolClass(id: string): Promise<SchoolClassModel>,
-
-
+  updateTimes(id: string, startTime: string, endTime: string): Promise<any>
+  removeStudent(idClass: string, idStudent: string): Promise<any>
 }
 
 @Injectable()
@@ -28,19 +28,13 @@ export class SchoolClassService implements ClassService{
   async createSchoolClass(
     idTeacher: string, 
     students: string[], 
-    startTime: Date, 
-    endTime: Date
-  ): Promise<SchoolClassModel> {
+    startTime: string, 
+    endTime: string
+  ): Promise<any> {
     try {
-      
-      if(
-        Array.isArray(students) && 
-        students.length >= 2 && 
-        students.length <= 5
-      ){
         let schoolClass = await new this.schoolClassModel({
           teacher: idTeacher,
-          students,
+          students: students,
           startTime,
           endTime
         });
@@ -48,9 +42,6 @@ export class SchoolClassService implements ClassService{
         schoolClass.save();
 
         return schoolClass;
-      }else{
-        return null;
-      }
     } catch (error) {
       throw error;
     }
@@ -58,7 +49,9 @@ export class SchoolClassService implements ClassService{
 
   async deleteSchoolClass(id: string): Promise<SchoolClassModel> {
     try {
-      return await this.schoolClassModel.findByIdAndDelete(id);
+      return await this.schoolClassModel.findByIdAndDelete({
+        _id: new Types.ObjectId(id)
+      });
     } catch (error) {
       throw error;
     }
@@ -66,7 +59,6 @@ export class SchoolClassService implements ClassService{
 
   async findAll(): Promise<SchoolClassModel[]> {
     try {
-  
       let schoolClass = await this.schoolClassModel.aggregate(
         [
           {
@@ -148,15 +140,48 @@ export class SchoolClassService implements ClassService{
     }
   }
 
-  async addStudents(idClass: string, students: string[]): Promise<SchoolClassModel> {
+  async findStudentClass(idStudent: string ){
     try {
-      return await this.schoolClassModel.findByIdAndUpdate({
-        _id: idClass
-      },
-      {
-        $set: {students: students}
-      }
-      );
+      return await this.schoolClassModel.aggregate([
+        {
+          $match: {
+            students: {$in:[idStudent] }
+          }
+        }
+      ]);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async addStudents(idClass: string, students: string[]): Promise<any> {
+    try {
+        let arrNewStudents: string[] = [];
+        const currentClass = await this.findById(idClass);
+
+        if(currentClass){
+          const studentsInClass = currentClass.students.map((e: any)=> e._id.valueOf());
+
+          for(let i: number = 0; i < students.length; i++){
+            const isIncludeInClass = studentsInClass.includes(students[i]);
+
+            if(!isIncludeInClass){
+              arrNewStudents.push(students[i]);
+            }
+          }
+        }
+
+        if( arrNewStudents.length > 0){
+          return await this.schoolClassModel.findOneAndUpdate({
+            _id: new Types.ObjectId(idClass)
+          },
+          {
+            $push: {students: {$each: arrNewStudents}}
+          });
+        }else{
+          return null;
+        }
+
     } catch (error) {
       throw error;
     }
@@ -165,11 +190,43 @@ export class SchoolClassService implements ClassService{
   async changeTeacher(idClass: string, teacher: string): Promise<SchoolClassModel> {
     try {
       return await this.schoolClassModel.findByIdAndUpdate({
-        _id: idClass
+        _id: new Types.ObjectId(idClass)
       },
       {
         $set: {teacher: teacher}
       }
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateTimes(id: string, startTime: string, endTime: string): Promise<any> {
+    try {
+      return await this.schoolClassModel.findByIdAndUpdate({
+        _id: new Types.ObjectId(id)
+      },
+      {
+        $set: {
+          startTime: startTime,
+          endTime: endTime
+        }
+      }
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async removeStudent(idClass: string, idStudent: string){
+    try {
+     return await this.schoolClassModel.updateOne(
+        { _id: new Types.ObjectId(idClass)},
+        {
+          $pull: {
+            students: {$in: [idStudent]}
+          }
+        },
       );
     } catch (error) {
       throw error;
