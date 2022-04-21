@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {ConfigModule, ConfigService} from '@nestjs/config';
 import {StudentModule} from './student/student.module';
 import { TeacherModule } from './teacher/teacher.module';
-import { SchoolClassModule } from './school-class/schoolClass.module';
+import { SchoolClassModule } from './schoolClass/schoolClass.module';
 
 @Module({
   imports: [

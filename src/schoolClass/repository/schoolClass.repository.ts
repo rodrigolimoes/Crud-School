@@ -1,36 +1,19 @@
 import { Injectable} from '@nestjs/common';
 import {InjectModel} from '@nestjs/mongoose';
 import {Model, Types} from 'mongoose';
-import {SchoolClassDocument, SchoolClassModel} from './model/schoolClass.model';
-import {StudentService} from '../student/student.service';
-
-interface ClassService {
-  createSchoolClass(
-    idTeacher: string,
-    students: string[],
-    startTime: string,
-    endTime: string,
-  ): Promise<SchoolClassModel | null>,
-  changeTeacher(idClass: string, teacher: string): Promise<SchoolClassModel>,
-  addStudents(idClass: string, students: string[]): Promise<SchoolClassModel>,
-  findAll(): Promise<SchoolClassModel[]>,
-  findById(id: string): Promise<SchoolClassModel>,
-  deleteSchoolClass(id: string): Promise<SchoolClassModel>,
-  updateTimes(id: string, startTime: string, endTime: string): Promise<any>
-  removeStudent(idClass: string, idStudent: string): Promise<any>
-}
+import {SchoolClassDocument, SchoolClassModel} from '../model/schoolClass.model';
 
 @Injectable()
-export class SchoolClassService implements ClassService{
+export class SchoolClassRepository {
 
-  constructor(@InjectModel(SchoolClassModel.name) private readonly schoolClassModel: Model<SchoolClassDocument>, private studentService: StudentService){}
+  constructor(@InjectModel(SchoolClassModel.name) private readonly schoolClassModel: Model<SchoolClassDocument>){}
 
   async createSchoolClass(
     idTeacher: string, 
     students: string[], 
     startTime: string, 
     endTime: string
-  ): Promise<any> {
+  ): Promise<SchoolClassModel> {
     try {
         let schoolClass = await new this.schoolClassModel({
           teacher: idTeacher,
@@ -59,7 +42,7 @@ export class SchoolClassService implements ClassService{
 
   async findAll(): Promise<SchoolClassModel[]> {
     try {
-      let schoolClass = await this.schoolClassModel.aggregate(
+      return await this.schoolClassModel.aggregate(
         [
           {
             $lookup:{
@@ -80,25 +63,14 @@ export class SchoolClassService implements ClassService{
           }
         ]
       );
-      
-      for(let i: number = 0; i < schoolClass.length; i++){
-        const students = schoolClass[i].students;
-        const populateStudents = await this.studentService.findStudentsById(
-          students
-        );      
-        schoolClass[i].students = populateStudents;     
-      }
-
-      return schoolClass;
     } catch (error) {
       throw error;
     }
   }
 
-  async findById(id: string): Promise<SchoolClassModel> {
+  async findById(id: string): Promise<SchoolClassModel[]> {
     try {
-
-      let schoolClass = await this.schoolClassModel.aggregate(
+      return await this.schoolClassModel.aggregate(
         [
           {
             $match: {
@@ -124,17 +96,6 @@ export class SchoolClassService implements ClassService{
           }
         ]
       );
-
-      for(let i: number = 0; i < schoolClass.length; i++){
-        const students = schoolClass[i].students;
-        const populateStudents = await this.studentService.findStudentsById(
-          students
-        );      
-        schoolClass[i].students = populateStudents;     
-      }
-
-     
-      return schoolClass[0];
     } catch (error) {
       throw error;
     }
@@ -156,32 +117,12 @@ export class SchoolClassService implements ClassService{
 
   async addStudents(idClass: string, students: string[]): Promise<any> {
     try {
-        let arrNewStudents: string[] = [];
-        const currentClass = await this.findById(idClass);
-
-        if(currentClass){
-          const studentsInClass = currentClass.students.map((e: any)=> e._id.valueOf());
-
-          for(let i: number = 0; i < students.length; i++){
-            const isIncludeInClass = studentsInClass.includes(students[i]);
-
-            if(!isIncludeInClass){
-              arrNewStudents.push(students[i]);
-            }
-          }
-        }
-
-        if( arrNewStudents.length > 0){
-          return await this.schoolClassModel.findOneAndUpdate({
-            _id: new Types.ObjectId(idClass)
-          },
-          {
-            $push: {students: {$each: arrNewStudents}}
-          });
-        }else{
-          return null;
-        }
-
+        return await this.schoolClassModel.findOneAndUpdate({
+          _id: new Types.ObjectId(idClass)
+        },
+        {
+          $push: {students: {$each: students}
+        }});
     } catch (error) {
       throw error;
     }

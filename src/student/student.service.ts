@@ -1,50 +1,30 @@
 import { Injectable } from '@nestjs/common';
-import {InjectModel} from '@nestjs/mongoose';
-import {Model, Types} from 'mongoose';
-import {StudentDocument, StudentModel} from './model/student.model';
-
-interface StudentMethod {
-  createStudent(
-    name: string, 
-    email: string,
-    address: string, 
-    birthDate: Date, 
-  ): Promise<StudentModel | null>,
-  updateStudent(
-    id: string,
-    name: string, 
-    email: string,
-    address: string, 
-    birthDate: Date, 
-  ): Promise<StudentModel>,
-  deleteStudent(id: string): Promise<StudentModel>,
-  findAll(): Promise<StudentModel[]>,
-  findById(id: string): Promise<StudentModel>,
-  findByEmail(email: string): Promise<StudentModel>,
-  findStudentsById(students: string[]):Promise<StudentModel[]>
-}
+import {StudentModel} from './model/student.model';
+import {Types} from 'mongoose';
+import {StudentRepository} from './repository/student.repository';
 
 @Injectable()
-export class StudentService implements StudentMethod {
-  constructor(
-    @InjectModel(StudentModel.name) private readonly studentModel: Model<StudentDocument>){}
+export class StudentService {
+  constructor(private studentRepository: StudentRepository){}
 
-    async createStudent(name: string, email: string, address: string, birthDate: Date): Promise<StudentModel> {
+    async createStudent(
+      name: string, 
+      email: string, 
+      address: string, 
+      birthDate: Date
+    ): Promise<StudentModel> {
       try {
-        const verifyStudent = await this.findByEmail(email);
+        const verifyStudent = await this.studentRepository.findByEmail(email);
 
         if(!(!verifyStudent)){
           return null;
         }else{
-          const student = await new this.studentModel({
+          return await this.studentRepository.createStudent(
             name,
             email,
             address,
             birthDate
-          });
-          student.save();
-    
-          return student; 
+          );
         }
       } catch (error) {
         throw error;
@@ -53,9 +33,7 @@ export class StudentService implements StudentMethod {
 
     async deleteStudent(id: string): Promise<StudentModel>{
       try {
-        return await this.studentModel.findByIdAndDelete({
-          _id: new Types.ObjectId(id)
-        });
+        return await this.studentRepository.deleteStudent(id);
       } catch (error) {
         throw error;
       }
@@ -63,7 +41,7 @@ export class StudentService implements StudentMethod {
 
     async findAll(): Promise<StudentModel[]> {
       try {
-        return await this.studentModel.find();
+        return await this.studentRepository.findAll();
       } catch (error) {
         throw error;
       }
@@ -71,9 +49,7 @@ export class StudentService implements StudentMethod {
 
     async findById(id: string): Promise<StudentModel>{
       try {
-        return await this.studentModel.findOne({
-          _id: new Types.ObjectId(id)
-        });
+        return await this.studentRepository.findById(id);
       } catch (error) {
         throw error;
       }
@@ -81,9 +57,7 @@ export class StudentService implements StudentMethod {
 
     async findByEmail(email: string): Promise<StudentModel>{
       try {
-        return await this.studentModel.findOne({
-          email: email
-        });
+        return await this.studentRepository.findByEmail(email);
       } catch (error) {
         throw error;
       }
@@ -91,45 +65,23 @@ export class StudentService implements StudentMethod {
 
     async updateStudent(id: string, name: string, email: string, address: string, birthDate: Date): Promise<StudentModel>{
       try {
-        return await this.studentModel.findOneAndUpdate(
-          {_id: new Types.ObjectId(id)},
-          {
-            $set:{
-              name,
-              email,
-              address,
-              birthDate
-            }
-          }
+        return await this.studentRepository.updateStudent(
+          id,
+          name,
+          email,
+          address,
+          birthDate
         );
       } catch (error) {
         throw error;
       }
     }
 
-    async findStudentsById(students: string[]): Promise<StudentModel[]> {
+    async findStudentsById(students: string[]): Promise<any[]> {
       try {
-
         const idsStudents = Array.isArray(students)? students.map(e=> new Types.ObjectId(e)) : [];
 
-        return await this.studentModel.aggregate([
-          {
-            $match: {
-              _id: {$in: idsStudents }
-            }
-          },
-          {
-            $project:{
-              id: 1,
-              name: 1,
-              email: 1,
-              address: 1,
-              birthDate: 1,
-
-            }
-          },
-          {$sort: { name: 1}}
-        ])
+        return await this.studentRepository.findStudentsById(idsStudents);
       } catch (error) {
         throw error;
       }

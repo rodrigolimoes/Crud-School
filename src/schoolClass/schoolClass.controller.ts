@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Delete, Patch, BadRequestException, InternalServerErrorException, HttpException, HttpStatus, Param, Body,  Query } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Patch, BadRequestException, InternalServerErrorException, HttpException, HttpStatus, Param, Body,  Query, Res, HttpCode } from '@nestjs/common';
+import {Response} from 'express';
 import {SchoolClassService} from './schoolClass.service';
 import {SchoolClassDto} from './dtos/schoolClass.dto';
 
@@ -8,12 +9,11 @@ export class SchoolClassController {
   constructor(private schoolClassService: SchoolClassService){}
 
   @Post()
-  async createSchoolClass(@Body() body: SchoolClassDto
+  async createSchoolClass(@Res() res:Response, @Body() body: SchoolClassDto
   ){
     try {
       const {teacher, students, startTime, endTime} = body;
 
-      if(teacher && students && startTime && endTime){
         let response = await this.schoolClassService.createSchoolClass(
           teacher,
           students,
@@ -22,35 +22,25 @@ export class SchoolClassController {
         );
 
         if(response){
-          throw new HttpException({statusCode: HttpStatus.OK, message: `Success create school class`}, HttpStatus.OK);
+          res.status(HttpStatus.OK).send({statusCode: HttpStatus.OK, message: `Success create school class`});
         }  
-      }else{
-        throw new BadRequestException('Invalid Data');
-      }
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
   }
 
   @Patch('/:id/student')
-  async addStudents(@Param("id") id: string, @Body() body: SchoolClassDto){
+  async addStudents(@Res() res: Response, @Param("id") id: string, @Body() body: {students: string[]}){
     try {
       const {students} = body;
       
-      if(students && students.length > 0){
         let response = await this.schoolClassService.addStudents(id, students);
 
         if(response){
-          throw new HttpException({statusCode: HttpStatus.OK, message: "Success register"}, HttpStatus.OK);
-        }else{
-          throw new BadRequestException('Falid in add students');
+          res.status(HttpStatus.OK).send({statusCode: HttpStatus.OK, message: "Success register Students"});
         }
-      }else{
-        throw new BadRequestException('Invalid Data');
-      }
-
     } catch (error) {
-      throw new HttpException({statusCode: error.status, message: error.message}, error.status);
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -66,39 +56,32 @@ export class SchoolClassController {
   @Get('/:id')
   async findById(@Param("id") id: string){
     try {
-      if(id){
-        return await this.schoolClassService.findById(id);
-      }else{
-        throw new BadRequestException('Invalid Data');
-      }
+      return await this.schoolClassService.findById(id);
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
   }
+  
 
   @Patch('/:id/teacher')
-  async changeTeacher(@Param("id") id: string, @Body() body: SchoolClassDto){
+  async changeTeacher(@Res() res: Response, @Param("id") id: string, @Query('idTeacher') idTeacher: string){
     try {
-      const {teacher} = body;
+      await this.schoolClassService.changeTeacher(id, idTeacher);
 
-      if(teacher){
-        return await this.schoolClassService.changeTeacher(id, teacher);
-      }else{
-        throw new BadRequestException('Invalid Data');
-      }
-
+      res.status(HttpStatus.OK).send({statusCode: HttpStatus.OK, message: "Success Change Teacher"});
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
   }
 
   @Delete('/:id')
-  async deleteSchoolClass(@Param("id") id: string){
+  async deleteSchoolClass(@Res() res: Response,@Param("id") id: string){
     try {
       if(id){
-        return await this.schoolClassService.deleteSchoolClass(id);
+        await this.schoolClassService.deleteSchoolClass(id);
+        res.status(HttpStatus.OK).send({statusCode: HttpStatus.OK, message: "Success Delete"});
       }else{
-        throw new BadRequestException('Invalid Data');
+        res.status(HttpStatus.BAD_REQUEST).send({statusCode: HttpStatus.BAD_REQUEST, message: "Invalid Id"});
       }
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -106,14 +89,18 @@ export class SchoolClassController {
   }
 
   @Patch('/:id')
-  async updateTimesClass(@Param("id") id: string, @Body() body: SchoolClassDto){
+  async updateTimesClass(@Res() res: Response, @Param("id") id: string, @Body() body: {
+    startTime: string, endTime: string
+  }){
     try {
       const {startTime, endTime} = body;
 
       if(id && startTime && endTime){
-        return await this.schoolClassService.updateTimes(id, startTime, endTime);
+        await this.schoolClassService.updateTimes(id, startTime, endTime);
+
+        res.status(HttpStatus.OK).send({statusCode: HttpStatus.OK, message: "Success  update Times"});
       }else{
-        throw new BadRequestException('Invalid Data');
+        res.status(HttpStatus.BAD_REQUEST).send({statusCode: HttpStatus.BAD_REQUEST, message: "Invalid Data"});
       }
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -122,20 +109,20 @@ export class SchoolClassController {
 
   @Delete("/:id/student")
   async deleteStudent(
+    @Res() res: Response,
     @Param("id") id: string, 
     @Query("idStudent") idStudent: string
     ){
     try {
 
       if(id && idStudent){
-        console.log(id, idStudent)
         let response  = await this.schoolClassService.removeStudent(id, idStudent);
 
         if(response){
-          throw new HttpException({statusCode: HttpStatus.OK, message: "Success Delete"}, HttpStatus.OK);
+          res.status(HttpStatus.OK).send({statusCode: HttpStatus.OK, message: "Success Delete"});
         }
       }else{
-        throw new BadRequestException('Invalid Data');
+        res.status(HttpStatus.BAD_REQUEST).send({statusCode: HttpStatus.BAD_REQUEST, message: "Invalid Data"});
       }
     } catch (error) {
       throw error;
