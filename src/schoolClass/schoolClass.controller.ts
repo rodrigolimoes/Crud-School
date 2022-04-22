@@ -1,7 +1,9 @@
-import { Controller, Post, Get, Delete, Patch, BadRequestException, InternalServerErrorException, HttpException, HttpStatus, Param, Body,  Query, Res, HttpCode } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Patch, BadRequestException, InternalServerErrorException, HttpException, HttpStatus, Param, Body,  Query, Res} from '@nestjs/common';
 import {Response} from 'express';
 import {SchoolClassService} from './schoolClass.service';
 import {SchoolClassDto} from './dtos/schoolClass.dto';
+import {TimeClassDto} from './dtos/TimeClass.dto';
+import {StudentsClassDto} from './dtos/studentsCLass.dto';
 
 @Controller('schoolclass')
 export class SchoolClassController {
@@ -30,7 +32,7 @@ export class SchoolClassController {
   }
 
   @Patch('/:id/student')
-  async addStudents(@Res() res: Response, @Param("id") id: string, @Body() body: {students: string[]}){
+  async addStudents(@Res() res: Response, @Param("id") id: string, @Body() body: StudentsClassDto){
     try {
       const {students} = body;
       
@@ -89,9 +91,7 @@ export class SchoolClassController {
   }
 
   @Patch('/:id')
-  async updateTimesClass(@Res() res: Response, @Param("id") id: string, @Body() body: {
-    startTime: string, endTime: string
-  }){
+  async updateTimesClass(@Res() res: Response, @Param("id") id: string, @Body() body: TimeClassDto){
     try {
       const {startTime, endTime} = body;
 

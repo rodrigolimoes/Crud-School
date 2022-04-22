@@ -61,12 +61,13 @@ export class SchoolClassService {
     try {
 
       let schoolClass = await this.schoolClassRepository.findById(id);
-      if(schoolClass[0]){
-          const students = schoolClass[0].students;
+      if(Array.isArray(schoolClass) && schoolClass.length > 0){
+        for(let i:number = 0; i < schoolClass.length;i++){
+          const students = schoolClass[i].students;
           const populateStudents = students.length > 0? await this.studentService.findStudentsById(students): [];      
-          schoolClass[0].students = populateStudents;     
+          schoolClass[i].students = populateStudents;     
         }
-        console.log(schoolClass)
+        }
       return schoolClass[0];
     } catch (error) {
       throw error;

@@ -13,8 +13,8 @@ import { SchoolClassModule } from './schoolClass/schoolClass.module';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       connectionName: 'crudschool',
-      useFactory: async () => ({
-        uri: 'mongodb://localhost:27017/crudschool',
+      useFactory: async (config: ConfigService) => ({
+        uri: config.get<string>('URL_DB'),
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }),
