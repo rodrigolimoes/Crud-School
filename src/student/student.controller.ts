@@ -1,4 +1,5 @@
-import { Controller, Post, Delete, Body, BadRequestException, InternalServerErrorException,HttpException, HttpStatus, Get, Put, Param } from '@nestjs/common';
+import { Controller, Post, Delete, Body, Res, InternalServerErrorException,HttpException, HttpStatus, Get, Put, Param } from '@nestjs/common';
+import {Response} from 'express';
 import {StudentDto} from './dtos/student.dto';
 import {StudentService} from './student.service';
 
@@ -8,11 +9,10 @@ export class StudentController {
   constructor(private studentService: StudentService){}
 
   @Post()
-  async createStudent(@Body() body: StudentDto){
+  async createStudent(@Res() res: Response, @Body() body: StudentDto){
     try {
       const {name, email, address, birthDate}  = body;
 
-      if(name && email && address && birthDate){
         let response = await this.studentService.createStudent(
           name, 
           email, 
@@ -21,32 +21,29 @@ export class StudentController {
         );
         
         if(!response){
-          return new HttpException({status: HttpStatus.OK, message:"Student already exist", error: ""}, HttpStatus.OK).getResponse();
+          res.status(HttpStatus.OK).send({statusCode: HttpStatus.OK, message: "Student already exist"});
         }else{
-          return new HttpException({status: HttpStatus.CREATED, message:"Registration success", error: ""}, HttpStatus.CREATED).getResponse();
+          res.status(HttpStatus.CREATED).send({statusCode: HttpStatus.CREATED, message: "Registration success"});
         }
-      }else{
-        throw new BadRequestException('Invalid Data');
-      }
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
   }
 
   @Put("/:id")
-  async updateStudent(@Param() id: string, @Body() body: StudentDto){
+  async updateStudent(@Res() res: Response, @Param("id") id: string, @Body() body: StudentDto){
     try {
       const {name, email, address, birthDate}  = body;
-
-      let response = await this.studentService.updateStudent(
+  
+      await this.studentService.updateStudent(
         id,
         name,
         email,
         address,
         new Date(birthDate)
       );
-
-      return new HttpException({ status: HttpStatus.OK, message:"Success update Student"},HttpStatus.OK).getResponse();
+      
+      res.status(HttpStatus.OK).send({statusCode: HttpStatus.OK, message: "Success update Student"});
 
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -54,11 +51,13 @@ export class StudentController {
   }
 
   @Delete("/:id")
-  async deleteTeacher(@Param() id: string){
+  async deleteTeacher(@Res() res: Response, @Param("id") id: string){
     try {
-      let response = await this.studentService.deleteStudent(id);
+      if(id !== undefined){
+        await this.studentService.deleteStudent(id);
+        res.status(HttpStatus.OK).send({statusCode: HttpStatus.OK, message: "Success delete Student"});
+      }
 
-      return new HttpException({ status: HttpStatus.OK, message:"Success delete Student"},HttpStatus.OK).getResponse();
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
@@ -74,7 +73,7 @@ export class StudentController {
   }
 
   @Get("/:id")
-  async findById(@Param() id: string){
+  async findById(@Param("id") id: string){
     try {
       return await this.studentService.findById(id);
     } catch (error) {

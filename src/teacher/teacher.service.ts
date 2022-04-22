@@ -1,35 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import {InjectModel} from '@nestjs/mongoose';
-import {Model, Types} from 'mongoose';
-import {TeacherDocument, TeacherModel} from './model/teacher.model';
-
-
-interface TeacherMethod {
-  createTeacher(
-    name: string, 
-    email: string,
-    address: string, 
-    birthDate: Date, 
-    subject: string
-  ): Promise<TeacherModel | null>,
-  updateTeacher(
-    id: string,
-    name: string, 
-    email: string,
-    address: string, 
-    birthDate: Date, 
-    subject: string
-  ): Promise<TeacherModel>,
-  deleteTeacher(id: string): Promise<TeacherModel>,
-  findAll(): Promise<TeacherModel[]>,
-  findById(id: string): Promise<TeacherModel>,
-  findByEmail(email: string): Promise<TeacherModel>,
-}
+import {TeacherRepository} from './repository/teacher.repository';
+import {TeacherModel} from './model/teacher.model';
 
 @Injectable()
-export class TeacherService implements TeacherMethod {
+export class TeacherService {
 
-  constructor(@InjectModel(TeacherModel.name) private readonly teacherModel: Model<TeacherDocument>){}
+  constructor(private teacherRepository: TeacherRepository){}
 
   async createTeacher(
     name: string, 
@@ -45,16 +21,13 @@ export class TeacherService implements TeacherMethod {
       if(!(!verifyTeacherExist)){
         return null;
       }else{
-        const teacher = await new this.teacherModel({
+        return await this.teacherRepository.createTeacher(
           name,
           email,
           address,
           birthDate,
           subject
-        });
-        teacher.save();
-  
-        return teacher;
+        );
       }
     } catch (error) {
      throw error; 
@@ -63,9 +36,7 @@ export class TeacherService implements TeacherMethod {
 
   async deleteTeacher(id: string): Promise<TeacherModel> {
     try {
-      return await this.teacherModel.findByIdAndDelete({
-        _id: new Types.ObjectId(id)
-      });
+      return await this.teacherRepository.deleteTeacher(id);
     } catch (error) {
       throw error;
     }
@@ -80,17 +51,13 @@ export class TeacherService implements TeacherMethod {
     subject: string
   ): Promise<TeacherModel> {
     try {
-      return await this.teacherModel.findByIdAndUpdate(
-        {_id: new Types.ObjectId(id)},
-        {
-          $set:{
-            name,
-            email,
-            address,
-            birthDate,
-            subject
-          }
-        }
+      return await this.teacherRepository.updateTeacher(
+        id,
+        name,
+        email,
+        address,
+        birthDate,
+        subject
       );
     } catch (error) {
       throw error;
@@ -99,7 +66,7 @@ export class TeacherService implements TeacherMethod {
 
   async findAll(): Promise<TeacherModel[]> {
     try {
-      return await this.teacherModel.find();
+      return await this.teacherRepository.findAll();
     } catch (error) {
       throw error;
     }
@@ -107,7 +74,7 @@ export class TeacherService implements TeacherMethod {
 
   async findById(id: string): Promise<TeacherModel> {
     try {
-      return await this.teacherModel.findById({_id: new Types.ObjectId(id)});
+      return await this.teacherRepository.findById(id);
     } catch (error) {
       throw error;
     }
@@ -115,7 +82,7 @@ export class TeacherService implements TeacherMethod {
 
   async findByEmail(email: string): Promise<TeacherModel> {
     try {
-      return await this.teacherModel.findOne({email: email});
+      return await this.teacherRepository.findByEmail(email);
     } catch (error) {
       throw error;
     }

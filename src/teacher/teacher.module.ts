@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TeacherModel, TeacherSchema } from './model/teacher.model';
 import { TeacherController } from './teacher.controller';
 import { TeacherService } from './teacher.service';
+import {TeacherRepository} from './repository/teacher.repository';
 
 @Module({
   imports:[
@@ -15,7 +16,8 @@ import { TeacherService } from './teacher.service';
     ], 'crudschool')
   ],
   controllers: [TeacherController],
-  providers: [TeacherService]
+  providers: [TeacherService, TeacherRepository],
+  exports:[TeacherRepository]
 })
 export class TeacherModule {}
 
