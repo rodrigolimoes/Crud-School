@@ -4,7 +4,7 @@
 ## 
 ```bash
 # Clonar o repositório
-git clone
+git clone https://github.com/rodrigolimoes/Crud-School.git
 
 # Navegue até o repositório
 cd crud-school
